@@ -43,7 +43,8 @@ function getCode (str) {
     return 'sz' + str
   }
 }
-
+let checkIndex = 0
+let tempSto = {}
 function checkItem (element) {
   console.log(element)
   var options = {
@@ -63,7 +64,7 @@ function checkItem (element) {
     console.log(temp);
     // 涨跌幅
     let zhangdie = parseFloat((parseFloat(temp[4]) / parseFloat(temp[3]) * 100 - 100).toFixed(2))
-    const temp2 = `涨幅:${element[2]},跌幅:${element[3]},涨速:${element[4]},跌速:${element[5]}`
+    const temp2 = `涨幅: ${element[2]},跌幅: ${element[3]},涨速: ${element[4]},跌速: ${element[5]}`
     console.log(temp[1] + '|' + temp[4] + '|' + temp[3] + '|' + zhangdie)
     if (zhangdie > parseFloat(element[2])) {
       console.log(`${temp[1]}达到了涨幅条件!`)
@@ -74,6 +75,24 @@ function checkItem (element) {
       console.log('达到跌幅条件!')
       sendMessage(element[1], zhangdie > 0 ? `涨幅: ${zhangdie}` : `跌幅: ${zhangdie}`, temp2)
     }
+    if (checkIndex == 0) {
+      tempSto[temp[1]] = temp
+    }
+    checkIndex++
+    if (checkIndex = 60) {
+      checkIndex = 0
+      zhangsu = parseFloat(temp[4]) - tempSto[temp[1]][4]
+      if (zhangsu > parseFloat(element[4])) {
+        console.log(`${temp[1]}达到了涨速条件!`)
+        console.log(temp[1], zhangdie > 0 ? `涨幅: ${zhangdie}%` : `跌幅: ${zhangdie}%`, temp2)
+        sendMessage(temp[1], zhangdie > 0 ? `涨幅: ${zhangdie}%` : `跌幅: ${zhangdie}%`, temp2)
+      }
+      if (zhangsu < -parseFloat(element[5])) {
+        console.log('达到跌速条件!')
+        sendMessage(element[1], zhangdie > 0 ? `涨幅: ${zhangdie}` : `跌幅: ${zhangdie}`, temp2)
+      }
+    }
+    
   });
 }
 
