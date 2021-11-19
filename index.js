@@ -62,12 +62,13 @@ function checkItem (element) {
     let temp = body.split(',')
     console.log(temp);
     // 涨跌幅
-    let zhangdie = parseFloat((temp[7] - temp[2]).toFixed(2))
-    const temp2 = `涨幅: ${element[2]}, 跌幅: ${element[3]}, 涨跌速：${element[4]}`
-    console.log(temp[1] + temp[7] + temp[2])
+    let zhangdie = parseFloat((parseFloat(temp[4]) / parseFloat(temp[3]) * 100 - 100).toFixed(2))
+    const temp2 = `涨幅:${element[2]},跌幅:${element[3]},涨速:${element[4]},跌速:${element[5]}`
+    console.log(temp[1] + '|' + temp[4] + '|' + temp[3] + '|' + zhangdie)
     if (zhangdie > parseFloat(element[2])) {
       console.log(`${temp[1]}达到了涨幅条件!`)
-      sendMessage(temp[1], zhangdie > 0 ? `涨幅: ${zhangdie}` : `跌幅: ${zhangdie}`, temp2)
+      console.log(temp[1], zhangdie > 0 ? `涨幅: ${zhangdie}%` : `跌幅: ${zhangdie}%`, temp2)
+      sendMessage(temp[1], zhangdie > 0 ? `涨幅: ${zhangdie}%` : `跌幅: ${zhangdie}%`, temp2)
     }
     if (zhangdie < -parseFloat(element[3])) {
       console.log('达到跌幅条件!')
@@ -92,19 +93,59 @@ var options = {
 };
 request(options, function (error, response) {
   if (error) throw new Error(error);
-  console.log(response.body);
+  
   let userArr = JSON.parse(response.body)['data']
-  userArr.forEach(element => {
-    let lineArr = element.value.data.split('\n')
-    setInterval(() => {
-      lineArr.forEach(element => {
-        let temp = element.split(',')
-        if (temp[0]) {
-          checkItem(temp)
-        }
-      });
-    }, 5000);
-    
+  startV = userArr[0]
+  let lineArr = startV.value.data.split('\n')
+  setInterval(() => {
+    lineArr.forEach(element => {
+      let temp = element.split(',')
+      if (!temp[1]) {
+        var options = {
+          'method': 'GET',
+          'url': 'http://hq.sinajs.cn/list=' + getCode(temp[0]),
+          'encoding': null,
+          'headers': {
+          }
+        };
+        request(options, function (error, response, body) {
+          if (error) throw new Error(error);
+          body =  iconv.decode(body, 'gb2312');
+          
+          body = body.replace('var hq_str_sz', '')
+          body = body.replace('="', ',')
+          body = body.replace('";', '')
+          let temp2 = body.split(',')
+          // console.log(`${temp[0]},,`, `${temp[0]},${temp2[1]},`)
+          startV.value.data = startV.value.data.replace(`${temp[0]},,`, `${temp[0]},${temp2[1]},`)
+        })
+      }
+      if (temp[0]) {
+        checkItem(temp)
+      }
+    });
+    // saveUserData(startV.value)
+  }, 5000);
+});
+
+function saveUserData (data) {
+  var options = {
+    'method': 'POST',
+    'url': 'https://user.hanshu.run/adminUpdata',
+    'headers': {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      "username": "admin",
+      "session": "5Cm9OU_sWViuhNPXPj-3Bg",
+      "userid": 2053,
+      "type": "股票监控",
+      "value": data
+    })
+  };
+  request(options, function (error, response) {
+    if (error) throw new Error(error);
+    console.log(response.body);
   });
   
-});
+}
