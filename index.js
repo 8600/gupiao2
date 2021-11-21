@@ -75,11 +75,11 @@ function checkItem (element) {
     console.log(temp[1] + '|' + temp[4] + '|' + temp[3] + '|' + zhangdie)
     if (zhangdie > parseFloat(element[2])) {
       console.log(`${temp[1]}达到了涨幅条件!`)
-      sendMessage(`${temp[1]} ${temp[0]}`, `涨幅: ${zhangdie}`, temp2, element.join(',') + '2')
+      sendMessage(`${temp[1]} ${temp[0]}`, `涨幅: ${zhangdie.toFixed(2)}`, temp2, element.join(',') + '2')
     }
     if (zhangdie < -parseFloat(element[3])) {
       console.log('达到跌幅条件!')
-      sendMessage(`${temp[1]} ${temp[0]}`, `跌幅: ${zhangdie}`, temp2, element.join(',') + '3')
+      sendMessage(`${temp[1]} ${temp[0]}`, `跌幅: ${zhangdie.toFixed(2)}`, temp2, element.join(',') + '3')
     }
     if (checkIndex == 0) {
       tempSto[temp[1]] = zhangdie
@@ -90,11 +90,11 @@ function checkItem (element) {
       zhangsu = zhangdie - tempSto[temp[1]]
       if (zhangsu > parseFloat(element[4])) {
         console.log(`${temp[1]}达到了涨速条件!`)
-        sendMessage(`${temp[1]} ${temp[0]}`, `涨速: ${zhangsu}`, temp2, element.join(',') + '4')
+        sendMessage(`${temp[1]} ${temp[0]}`, `涨速: ${zhangsu.toFixed(2)}`, temp2, element.join(',') + '4')
       }
       if (zhangsu < -parseFloat(element[5])) {
         console.log('达到跌速条件!')
-        sendMessage(`${temp[1]} ${temp[0]}`, `跌速: ${zhangsu}`, temp2, element.join(',') + '5')
+        sendMessage(`${temp[1]} ${temp[0]}`, `跌速: ${zhangsu.toFixed(2)}`, temp2, element.join(',') + '5')
       }
     }
     
@@ -151,7 +151,9 @@ request(options, function (error, response) {
         checkItem(temp)
       }
     });
-    if (needUpdata) saveUserData(startV.value)
+    setTimeout(() => {
+      if (needUpdata) saveUserData(startV.value)
+    }, 1000);
   }, 10000);
 });
 
