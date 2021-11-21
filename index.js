@@ -19,7 +19,13 @@ Date.prototype.Format = function (fmt) { // author: meizz
       return fmt;
 }
 
-function sendMessage(name, text1, text3) {
+let keySto = {}
+
+function sendMessage(name, text1, text3, key) {
+  if (keySto[key]) {
+    return
+  }
+  keySto[key] = true
   var options = {
     'method': 'POST',
     'url': 'https://hanshu.run/gzh?id=ohxET6Js9dbeLHvxOO7uiO9ToTGg&template=EvpHwEBpG2rkLHYMtIH2ADww9JCQwEaWlTAqyoPF6xQ',
@@ -46,7 +52,7 @@ function getCode (str) {
 let checkIndex = 0
 let tempSto = {}
 function checkItem (element) {
-  console.log(element)
+  // console.log(element)
   var options = {
     'method': 'GET',
     'url': 'http://hq.sinajs.cn/list=' + getCode(element[0]),
@@ -58,38 +64,37 @@ function checkItem (element) {
     if (error) throw new Error(error);
     body =  iconv.decode(body, 'gb2312');
     body = body.replace('var hq_str_sz', '')
+    body = body.replace('var hq_str_sh', '')
     body = body.replace('="', ',')
     body = body.replace('";', '')
     let temp = body.split(',')
-    console.log(temp);
+    // console.log(temp);
     // 涨跌幅
     let zhangdie = parseFloat((parseFloat(temp[4]) / parseFloat(temp[3]) * 100 - 100).toFixed(2))
     const temp2 = `涨幅: ${element[2]},跌幅: ${element[3]},涨速: ${element[4]},跌速: ${element[5]}`
     console.log(temp[1] + '|' + temp[4] + '|' + temp[3] + '|' + zhangdie)
     if (zhangdie > parseFloat(element[2])) {
       console.log(`${temp[1]}达到了涨幅条件!`)
-      console.log(temp[1], zhangdie > 0 ? `涨幅: ${zhangdie}%` : `跌幅: ${zhangdie}%`, temp2)
-      sendMessage(temp[1], zhangdie > 0 ? `涨幅: ${zhangdie}%` : `跌幅: ${zhangdie}%`, temp2)
+      sendMessage(`${temp[1]} ${temp[0]}`, `涨幅: ${zhangdie}`, temp2, element.join(',') + '2')
     }
     if (zhangdie < -parseFloat(element[3])) {
       console.log('达到跌幅条件!')
-      sendMessage(element[1], zhangdie > 0 ? `涨幅: ${zhangdie}` : `跌幅: ${zhangdie}`, temp2)
+      sendMessage(`${temp[1]} ${temp[0]}`, `跌幅: ${zhangdie}`, temp2, element.join(',') + '3')
     }
     if (checkIndex == 0) {
-      tempSto[temp[1]] = temp
+      tempSto[temp[1]] = zhangdie
     }
     checkIndex++
-    if (checkIndex = 60) {
+    if (checkIndex = 30) {
       checkIndex = 0
-      zhangsu = parseFloat(temp[4]) - tempSto[temp[1]][4]
+      zhangsu = zhangdie - tempSto[temp[1]]
       if (zhangsu > parseFloat(element[4])) {
         console.log(`${temp[1]}达到了涨速条件!`)
-        console.log(temp[1], zhangdie > 0 ? `涨幅: ${zhangdie}%` : `跌幅: ${zhangdie}%`, temp2)
-        sendMessage(temp[1], zhangdie > 0 ? `涨幅: ${zhangdie}%` : `跌幅: ${zhangdie}%`, temp2)
+        sendMessage(`${temp[1]} ${temp[0]}`, `涨速: ${zhangsu}`, temp2, element.join(',') + '4')
       }
       if (zhangsu < -parseFloat(element[5])) {
         console.log('达到跌速条件!')
-        sendMessage(element[1], zhangdie > 0 ? `涨幅: ${zhangdie}` : `跌幅: ${zhangdie}`, temp2)
+        sendMessage(`${temp[1]} ${temp[0]}`, `跌速: ${zhangsu}`, temp2, element.join(',') + '5')
       }
     }
     
@@ -117,9 +122,11 @@ request(options, function (error, response) {
   startV = userArr[0]
   let lineArr = startV.value.data.split('\n')
   setInterval(() => {
+    let needUpdata = false
     lineArr.forEach(element => {
       let temp = element.split(',')
       if (!temp[1]) {
+        
         var options = {
           'method': 'GET',
           'url': 'http://hq.sinajs.cn/list=' + getCode(temp[0]),
@@ -129,6 +136,7 @@ request(options, function (error, response) {
         };
         request(options, function (error, response, body) {
           if (error) throw new Error(error);
+          needUpdata = true
           body =  iconv.decode(body, 'gb2312');
           
           body = body.replace('var hq_str_sz', '')
@@ -143,8 +151,8 @@ request(options, function (error, response) {
         checkItem(temp)
       }
     });
-    // saveUserData(startV.value)
-  }, 5000);
+    if (needUpdata) saveUserData(startV.value)
+  }, 10000);
 });
 
 function saveUserData (data) {
