@@ -61,7 +61,10 @@ function checkItem (element) {
     }
   };
   request(options, function (error, response, body) {
-    if (error) throw new Error(error);
+    if (error) {
+      console.log(error)
+      return
+    }
     body =  iconv.decode(body, 'gb2312');
     body = body.replace('var hq_str_sz', '')
     body = body.replace('var hq_str_sh', '')
@@ -75,10 +78,12 @@ function checkItem (element) {
     console.log(temp[1] + '|' + temp[4] + '|' + temp[3] + '|' + zhangdie)
     if (zhangdie > parseFloat(element[2])) {
       console.log(`${temp[1]}达到了涨幅条件!`)
+      console.log(`${temp[1]} ${temp[0]}`, `涨幅: ${zhangdie.toFixed(2)}`, temp2, element.join(',') + '2')
       sendMessage(`${temp[1]} ${temp[0]}`, `涨幅: ${zhangdie.toFixed(2)}`, temp2, element.join(',') + '2')
     }
     if (zhangdie < -parseFloat(element[3])) {
       console.log('达到跌幅条件!')
+      console.log(`${temp[1]} ${temp[0]}`, `跌幅: ${zhangdie.toFixed(2)}`, temp2, element.join(',') + '3')
       sendMessage(`${temp[1]} ${temp[0]}`, `跌幅: ${zhangdie.toFixed(2)}`, temp2, element.join(',') + '3')
     }
     if (checkIndex == 0) {
@@ -125,35 +130,35 @@ request(options, function (error, response) {
     let needUpdata = false
     lineArr.forEach(element => {
       let temp = element.split(',')
-      if (!temp[1]) {
+      // if (!temp[1]) {
         
-        var options = {
-          'method': 'GET',
-          'url': 'http://hq.sinajs.cn/list=' + getCode(temp[0]),
-          'encoding': null,
-          'headers': {
-          }
-        };
-        request(options, function (error, response, body) {
-          if (error) throw new Error(error);
-          needUpdata = true
-          body =  iconv.decode(body, 'gb2312');
+      //   var options = {
+      //     'method': 'GET',
+      //     'url': 'http://hq.sinajs.cn/list=' + getCode(temp[0]),
+      //     'encoding': null,
+      //     'headers': {
+      //     }
+      //   };
+      //   request(options, function (error, response, body) {
+      //     if (error) throw new Error(error);
+      //     needUpdata = true
+      //     body =  iconv.decode(body, 'gb2312');
           
-          body = body.replace('var hq_str_sz', '')
-          body = body.replace('="', ',')
-          body = body.replace('";', '')
-          let temp2 = body.split(',')
-          // console.log(`${temp[0]},,`, `${temp[0]},${temp2[1]},`)
-          startV.value.data = startV.value.data.replace(`${temp[0]},,`, `${temp[0]},${temp2[1]},`)
-        })
-      }
+      //     body = body.replace('var hq_str_sz', '')
+      //     body = body.replace('="', ',')
+      //     body = body.replace('";', '')
+      //     let temp2 = body.split(',')
+      //     // console.log(`${temp[0]},,`, `${temp[0]},${temp2[1]},`)
+      //     startV.value.data = startV.value.data.replace(`${temp[0]},,`, `${temp[0]},${temp2[1]},`)
+      //   })
+      // }
       if (temp[0]) {
         checkItem(temp)
       }
     });
-    setTimeout(() => {
-      if (needUpdata) saveUserData(startV.value)
-    }, 1000);
+    // setTimeout(() => {
+    //   if (needUpdata) saveUserData(startV.value)
+    // }, 1000);
   }, 10000);
 });
 
