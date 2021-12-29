@@ -1,6 +1,7 @@
 const { array } = require('assert-plus');
 const request = require('request');
 const iconv = require('iconv-lite');
+const schedule = require("node-schedule");
 
 Date.prototype.Format = function (fmt) { // author: meizz
   var o = {
@@ -51,7 +52,7 @@ function getCode (str) {
 }
 let checkIndex = 0
 let tempSto = {}
-function checkItem (element) {
+function checkItem (element, checkIndex) {
   // console.log(element)
   var options = {
     'method': 'GET',
@@ -75,30 +76,31 @@ function checkItem (element) {
     // 涨跌幅
     let zhangdie = parseFloat((parseFloat(temp[4]) / parseFloat(temp[3]) * 100 - 100).toFixed(2))
     const temp2 = `涨幅: ${element[2]},跌幅: ${element[3]},涨速: ${element[4]},跌速: ${element[5]}`
-    console.log(temp[1] + '|' + temp[4] + '|' + temp[3] + '|' + zhangdie)
+    // console.log(temp[1] + '|' + temp[4] + '|' + temp[3] + '|' + zhangdie)
     if (zhangdie > parseFloat(element[2])) {
       console.log(`${temp[1]}达到了涨幅条件!`)
       console.log(`${temp[1]} ${temp[0]}`, `涨幅: ${zhangdie.toFixed(2)}`, temp2, element.join(',') + '2')
       sendMessage(`${temp[1]} ${temp[0]}`, `涨幅: ${zhangdie.toFixed(2)}`, temp2, element.join(',') + '2')
     }
-    if (zhangdie < -parseFloat(element[3])) {
+    if (zhangdie < -parseFloat(element[3]) && zhangdie != -100) {
       console.log('达到跌幅条件!')
       console.log(`${temp[1]} ${temp[0]}`, `跌幅: ${zhangdie.toFixed(2)}`, temp2, element.join(',') + '3')
       sendMessage(`${temp[1]} ${temp[0]}`, `跌幅: ${zhangdie.toFixed(2)}`, temp2, element.join(',') + '3')
     }
     if (checkIndex == 0) {
       tempSto[temp[1]] = zhangdie
+      // console.log(tempSto)
     }
-    checkIndex++
-    if (checkIndex = 30) {
-      checkIndex = 0
+    
+    if (checkIndex == 30) {
       zhangsu = zhangdie - tempSto[temp[1]]
-      if (zhangsu > parseFloat(element[4])) {
+      console.log(`${temp[1]} ${zhangdie} ${tempSto[temp[1]]} 涨速:${zhangsu}`)
+      if (zhangsu >= parseFloat(element[4])) {
         console.log(`${temp[1]}达到了涨速条件!`)
         sendMessage(`${temp[1]} ${temp[0]}`, `涨速: ${zhangsu.toFixed(2)}`, temp2, element.join(',') + '4')
       }
-      if (zhangsu < -parseFloat(element[5])) {
-        console.log('达到跌速条件!')
+      if (zhangsu <= -parseFloat(element[5])) {
+        console.log(`达到跌速条件${zhangsu.toFixed(2)}!`)
         sendMessage(`${temp[1]} ${temp[0]}`, `跌速: ${zhangsu.toFixed(2)}`, temp2, element.join(',') + '5')
       }
     }
@@ -126,40 +128,33 @@ request(options, function (error, response) {
   let userArr = JSON.parse(response.body)['data']
   startV = userArr[0]
   let lineArr = startV.value.data.split('\n')
-  setInterval(() => {
-    let needUpdata = false
+  schedule.scheduleJob('0/10 * 9-11 * * 2,3,4,5,6 ', function(){
     lineArr.forEach(element => {
       let temp = element.split(',')
-      // if (!temp[1]) {
-        
-      //   var options = {
-      //     'method': 'GET',
-      //     'url': 'http://hq.sinajs.cn/list=' + getCode(temp[0]),
-      //     'encoding': null,
-      //     'headers': {
-      //     }
-      //   };
-      //   request(options, function (error, response, body) {
-      //     if (error) throw new Error(error);
-      //     needUpdata = true
-      //     body =  iconv.decode(body, 'gb2312');
-          
-      //     body = body.replace('var hq_str_sz', '')
-      //     body = body.replace('="', ',')
-      //     body = body.replace('";', '')
-      //     let temp2 = body.split(',')
-      //     // console.log(`${temp[0]},,`, `${temp[0]},${temp2[1]},`)
-      //     startV.value.data = startV.value.data.replace(`${temp[0]},,`, `${temp[0]},${temp2[1]},`)
-      //   })
-      // }
+  
       if (temp[0]) {
-        checkItem(temp)
+        checkItem(temp, checkIndex)
       }
     });
-    // setTimeout(() => {
-    //   if (needUpdata) saveUserData(startV.value)
-    // }, 1000);
-  }, 10000);
+    checkIndex++
+    if (checkIndex >= 31) {
+      checkIndex = 0
+    }
+  });
+  
+  schedule.scheduleJob('0/10 * 13-15 * * 2,3,4,5,6 ', function(){
+    lineArr.forEach(element => {
+      let temp = element.split(',')
+  
+      if (temp[0]) {
+        checkItem(temp, checkIndex)
+      }
+    });
+    checkIndex++
+    if (checkIndex >= 31) {
+      checkIndex = 0
+    }
+  });
 });
 
 function saveUserData (data) {
@@ -183,3 +178,4 @@ function saveUserData (data) {
   });
   
 }
+
