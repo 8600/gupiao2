@@ -128,21 +128,9 @@ request(options, function (error, response) {
   let userArr = JSON.parse(response.body)['data']
   startV = userArr[0]
   let lineArr = startV.value.data.split('\n')
-  schedule.scheduleJob('0/10 * 9-11 * * 2,3,4,5,6 ', function(){
-    lineArr.forEach(element => {
-      let temp = element.split(',')
   
-      if (temp[0]) {
-        checkItem(temp, checkIndex)
-      }
-    });
-    checkIndex++
-    if (checkIndex >= 31) {
-      checkIndex = 0
-    }
-  });
-  
-  schedule.scheduleJob('0/10 * 13-15 * * 2,3,4,5,6 ', function(){
+  schedule.scheduleJob('0/10 * 9-11,13-14 * * 1,2,3,4,5', function(){
+    console.log('检测:' + lineArr.length)
     lineArr.forEach(element => {
       let temp = element.split(',')
   
