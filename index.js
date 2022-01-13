@@ -95,16 +95,17 @@ function checkItem (element, checkIndex) {
     if (checkIndex == 30) {
       zhangsu = zhangdie - tempSto[temp[1]]
       console.log(`${temp[1]} ${zhangdie} ${tempSto[temp[1]]} 涨速:${zhangsu}`)
-      if (zhangsu >= parseFloat(element[4])) {
-        console.log(`${temp[1]}达到了涨速条件!`)
-        sendMessage(`${temp[1]} ${temp[0]}`, `涨速: ${zhangsu.toFixed(2)}`, temp2, element.join(',') + '4')
-      }
-      if (zhangsu <= -parseFloat(element[5])) {
-        console.log(`达到跌速条件${zhangsu.toFixed(2)}!`)
-        sendMessage(`${temp[1]} ${temp[0]}`, `跌速: ${zhangsu.toFixed(2)}`, temp2, element.join(',') + '5')
+      if (zhangsu > -20 && zhangsu < 20) {
+        if (zhangsu >= parseFloat(element[4])) {
+          console.log(`${temp[1]}达到了涨速条件!`)
+          sendMessage(`${temp[1]} ${temp[0]}`, `涨速: ${zhangsu.toFixed(2)}`, temp2, element.join(',') + '4')
+        }
+        if (zhangsu <= -parseFloat(element[5])) {
+          console.log(`达到跌速条件${zhangsu.toFixed(2)}!`)
+          sendMessage(`${temp[1]} ${temp[0]}`, `跌速: ${zhangsu.toFixed(2)}`, temp2, element.join(',') + '5')
+        }
       }
     }
-    
   });
 }
 
@@ -129,7 +130,21 @@ request(options, function (error, response) {
   startV = userArr[0]
   let lineArr = startV.value.data.split('\n')
   
-  schedule.scheduleJob('0/10 * 9-11,13-14 * * 1,2,3,4,5', function(){
+  schedule.scheduleJob('0/10 * 10,13-14 * * 1,2,3,4,5', function(){
+    console.log('检测:' + lineArr.length)
+    lineArr.forEach(element => {
+      let temp = element.split(',')
+  
+      if (temp[0]) {
+        checkItem(temp, checkIndex)
+      }
+    });
+    checkIndex++
+    if (checkIndex >= 31) {
+      checkIndex = 0
+    }
+  });
+  schedule.scheduleJob('0/10 30-59 9,11 * * 1,2,3,4,5', function(){
     console.log('检测:' + lineArr.length)
     lineArr.forEach(element => {
       let temp = element.split(',')
